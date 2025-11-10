@@ -1,4 +1,4 @@
-const apiBase = 'https://adipotech-solution.onrender.com';
+const apiBase = 'https://adipotech-backend.onrender.com';
 
 function id(i) { return document.getElementById(i); }
 function token() { return localStorage.getItem('token'); }
