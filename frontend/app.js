@@ -1,4 +1,4 @@
-const apiBase = 'http://localhost:3000';
+const apiBase = 'https://adipotech-solution.onrender.com';
 
 function id(i) { return document.getElementById(i); }
 function token() { return localStorage.getItem('token'); }
