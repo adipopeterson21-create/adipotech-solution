@@ -1,29 +1,24 @@
 const apiBase = 'https://adipotech-backend.onrender.com';
 
 function id(i) { return document.getElementById(i); }
-function token() { return localStorage.getItem('token'); }
-function setToken(t) { localStorage.setItem('token', t); }
-function clearToken() { localStorage.removeItem('token'); location.reload(); }
+
+// Disable login system — everyone is treated as a guest
+function token() { return 'guest'; }
+function setToken(t) {}
+function clearToken() {}
 
 async function api(path, opts = {}) {
   opts.headers = opts.headers || {};
-  if (token()) opts.headers['Authorization'] = 'Bearer ' + token();
+  // No Authorization header needed for public access
   const res = await fetch(apiBase + path, opts);
-  if (res.status === 401) {
-    clearToken();
-    throw new Error('unauthorized');
+  if (!res.ok) {
+    console.error('API error:', res.status);
+    throw new Error('API error');
   }
   return res.json();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const btnAuth = id('btnAuth'),
-    authModal = id('authModal'),
-    closeAuth = id('closeAuth'),
-    authForm = id('authForm'),
-    switchAuth = id('switchAuth'),
-    authTitle = id('authTitle');
-
   const appMain = id('app'),
     materials = id('materials'),
     aiArea = id('aiArea'),
@@ -31,54 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     adminPanel = id('adminPanel'),
     uploadForm = id('uploadForm');
 
-  let isLogin = true;
-
-  btnAuth.addEventListener('click', () => authModal.classList.remove('hidden'));
-  closeAuth.addEventListener('click', () => authModal.classList.add('hidden'));
-
-  switchAuth.addEventListener('click', () => {
-    isLogin = !isLogin;
-    authTitle.innerText = isLogin ? 'Login' : 'Register';
-    id('u_name').style.display = isLogin ? 'none' : 'block';
-    authForm.querySelector('button').innerText = isLogin ? 'Login' : 'Register';
-    switchAuth.innerText = isLogin ? "Don't have an account? Register" : 'Already have an account? Login';
-  });
-
-  authForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = id('u_name').value || 'user';
-    const email = id('u_email').value;
-    const password = id('u_password').value;
-    const endpoint = isLogin ? '/api/login' : '/api/register';
-    const body = isLogin ? { email, password } : { username, email, password };
-
-    try {
-      const res = await fetch(apiBase + endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const j = await res.json();
-      if (res.ok) {
-        if (isLogin) {
-          setToken(j.token);
-          authModal.classList.add('hidden');
-          init();
-        } else {
-          alert('Registered. Please log in.');
-          switchAuth.click();
-        }
-      } else {
-        alert(j.error || j.message || 'Error');
-      }
-    } catch (e) {
-      console.error(e);
-      alert('Auth error');
-    }
-  });
+  // 🟢 Removed all login/register modal logic
+  // Users can now directly access content without authentication.
 
   async function init() {
-    if (!token()) return;
     appMain.removeAttribute('aria-hidden');
     try {
       const contents = await api('/api/contents');
@@ -88,15 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
         d.innerHTML = `<strong>${c.title}</strong><p>${c.description || ''}</p>`;
         materials.appendChild(d);
       });
-      const payload = JSON.parse(atob(token().split('.')[1]));
-      if (payload.role === 'admin') adminPanel.classList.remove('hidden');
+      // Always show AI assistant to all users
       aiArea.classList.remove('hidden');
     } catch (e) {
       console.error(e);
+      materials.innerHTML = '<p>Failed to load materials.</p>';
     }
   }
 
-  uploadForm.addEventListener('submit', async (e) => {
+  uploadForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = new FormData();
     form.append('file', id('file').files[0]);
@@ -106,9 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
     form.append('premium', id('isPremium').checked ? 'true' : 'false');
 
     try {
+      // Upload will fail unless backend allows public upload
       const res = await fetch(apiBase + '/api/admin/upload', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token() },
         body: form
       });
       const j = await res.json();
@@ -148,5 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  if (token()) init();
+  // Initialize automatically — no login required
+  init();
 });
