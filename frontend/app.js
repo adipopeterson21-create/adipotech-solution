@@ -46,6 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
       materials.innerHTML = '<p>Failed to load materials.</p>';
     }
   }
+  async function loadContent() {
+  const res = await fetch('/api/contents');
+  const data = await res.json();
+  const container = document.getElementById('materials');
+  container.innerHTML = '';
+
+  if (!data.length) {
+    container.innerHTML = '<p>No content available yet.</p>';
+    return;
+  }
+
+  data.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'content-card';
+    el.innerHTML = `
+      <h3>${item.title}</h3>
+      <p>${item.description}</p>
+      <a href="${item.fileUrl}" target="_blank">Open</a>
+    `;
+    container.appendChild(el);
+  });
+}
+loadContent();
+
 
   uploadForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
